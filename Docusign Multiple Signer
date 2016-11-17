@@ -1,0 +1,76 @@
+{
+  "emailSubject": "Test Doc",
+  "emailBlurb": "Testing Visibility",
+  "documents": [
+    {
+      "name": "TestDoc1",
+      "documentId": 1
+    },
+    {
+      "name": "TestDoc2",
+      "documentId": 2
+    }
+  ],
+  "status": "sent",
+  "enforceSignerVisibility": true,
+  "recipients": {
+    "signers": [
+      {
+        "routingOrder": 1,
+        "recipientId": 1,
+        "name": "Signer 1",
+        "email": "test.tfcornerstone+t1@gmail.com",
+        "clientUserId": null,
+        "tabs": {
+          "signHereTabs": [
+            {
+              "anchorYOffset": "0",
+              "anchorXOffset": "0",
+              "anchorString": "[__[Signer1]__]",
+              "anchorIgnoreIfNotPresent": true
+            }
+          ]
+        },
+        "embeddedRecipientStartUrl": null,
+        "excludedDocuments": null
+      },
+      {
+        "routingOrder": 1,
+        "recipientId": 2,
+        "name": "Signer 2",
+        "email": "test.tfcornerstone+t2@gmail.com",
+        "clientUserId": null,
+        "tabs": {
+          "signHereTabs": [
+            {
+              "anchorYOffset": "0",
+              "anchorXOffset": "0",
+              "anchorString": "[__[Signer2]__]",
+              "anchorIgnoreIfNotPresent": true
+            }
+          ]
+        },
+        "embeddedRecipientStartUrl": null,
+        "excludedDocuments": null
+      }
+    ]
+  },
+  "eventNotification": {
+    "loggingEnabled": false,
+    "requireAcknowledgment": false,
+    "useSoapInterface": false,
+    "includeCertificateWithSoap": false,
+    "signMessageWithX509Cert": false,
+    "includeDocuments": false,
+    "includeTimeZone": false,
+    "includeSenderAccountAsCustomField": false,
+    "recipientEvents": [
+      {
+        "recipientEventStatusCode": "Completed"
+      },
+      {
+        "recipientEventStatusCode": "Sent"
+      }
+    ]
+  }
+}
