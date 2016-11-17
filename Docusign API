@@ -22,7 +22,7 @@ String body =  '{'+
     '      "email": "parthibanv@mstsolutions.com",'+
     '      "name": "Parthiban Vijayan",'+
     '      "recipientId":"1",'+
-    '      "clientUserId":"1",'+
+  //  '      "clientUserId":"1",'+ // Removed client id for sending the email
     '      "tabs": {'+
     '                "signHereTabs": [{'+
     '                    "xPosition": "100",'+
