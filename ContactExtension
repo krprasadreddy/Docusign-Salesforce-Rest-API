@@ -1,0 +1,101 @@
+public with sharing class ContactExtension {
+    
+    public ContactExtension(){
+    }
+    
+    public String caseID{get;set;}
+    Map<id,Contact> contactMap = new Map<id,Contact>();
+    
+    public List<ContactWrapper> getContacts(){
+        
+        List<ContactWrapper> contactWrapperList = new List<ContactWrapper>();
+        
+        for(Contact contactIns : [SELECT NAME,EMAIL,sent__c FROM CONTACT WHERE EMAIL != NULL]){
+            ContactWrapper conIns = new ContactWrapper();
+            conIns.contactIns = contactIns;
+            conIns.isSent = contactIns.sent__c;
+            contactWrapperList.add(conIns);
+            contactMap.put(contactIns.id,contactIns);
+        }
+        
+        return contactWrapperList;
+        
+    }
+    
+    public Class ContactWrapper{
+        
+        public Contact contactIns{get;set;}
+        public Boolean isSent{get;set;}
+        
+    }
+    
+    
+    public void Send(){
+        system.debug('------- CASee  '+caseID);
+        if(caseID <> NULL && contactMap.containsKey(caseID)){
+            
+            Contact contactIns = contactMap.get(caseID);
+            
+            string endpoint = 'https://demo.docusign.net/restapi/v2/accounts/05f7d2d7-d555-4e36-99ce-a799ef1de8c9/envelopes';
+            String authorizationHeader = '<DocuSignCredentials><Username>parthiban019@gmail.com</Username><Password>parthiban18</Password><IntegratorKey>MSTS-a4ee3e59-b522-43bf-a88f-887767010a7f</IntegratorKey></DocuSignCredentials>';
+            String boundary = 'AAA';
+            
+            Pagereference PDFval = Page.Contacts_VF;
+            String documentPDF = EncodingUtil.base64Encode(PDFval.getContentAsPDF());
+            
+            String body =  '{'+
+                '  "status":"sent",'+
+                '  "enableWetSign": "false",'+
+                '  "emailBlurb":"Please Sign this Document blurb '+contactIns.Name+'",'+
+                '  "emailSubject": "Please Sign this Document subject'+contactIns.Name+'",'+
+                '  "enforceSignerVisibility":"True",'+
+                '  "documents": [{'+
+                '      "name": "document.pdf",'+
+                '      "documentId":"1",'+
+                '      "order":"1",'+
+                '      "documentBase64":"'+documentPDF+'"'+
+                '  }],'+
+                '"recipients": {'+
+                '    "signers" : [{'+
+                '      "email": "'+contactIns.Email+'",'+
+                '      "name": "'+contactIns.Name+'",'+
+                '      "recipientId":"1",'+
+                //  '      "clientUserId":"1",'+ // Removed client id for sending the email
+                '      "tabs": {'+
+                '                "signHereTabs": [{'+
+                '                    "xPosition": "100",'+
+                '                    "yPosition": "100",'+
+                '                    "documentId": "1",'+
+                '                    "pageNumber": "1",'+
+                '                }]'+
+                '            }'+
+                '    }]'+
+                '  }'+
+                '}';
+            
+            String header = '--'+boundary+'\nContent-Type: application/json\nContent-Disposition: form-data';
+            String jsonBody = header +'\n\n'+body+'\n\n--'+boundary+'--';
+            system.debug(jsonBody);
+            //Callout to Docusign.
+            HttpRequest req = new HttpRequest();
+            req.setHeader('X-DocuSign-Authentication', authorizationHeader);
+            req.setHeader('Accept','application/json');
+            req.setHeader('Host','demo.docusign.net');
+            req.setHeader('Content-Length','162100');
+            req.setHeader('Content-Type','multipart/form-data; boundary='+boundary);
+            req.setEndpoint(endpoint);
+            req.setMethod('POST'); 
+            req.setBody(jsonBody);
+            Http http = new Http();
+            HTTPResponse res;
+            
+            res = http.send(req);
+            system.debug(res.getBody());
+            if(res.getstatusCode() == 201 && res.getStatus() <> NULL &&  res.getStatus() == 'Created' && contactIns <> NULL && !contactIns.sent__c)
+            {
+                contactIns.sent__c = TRUE;
+                UPDATE contactIns;
+            }
+        }
+    }
+}
