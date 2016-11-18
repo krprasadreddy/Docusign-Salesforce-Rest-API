@@ -1,0 +1,26 @@
+<apex:page controller="ContactExtension">
+  <apex:form id="formID" >
+  <APEx:PAGEBlock >
+  <apex:pageBlockTable value="{!Contacts}" var="con">
+  <apex:column value="{!con.contactIns.Name}"/>
+  <apex:column value="{!con.contactIns.Email}"/>
+  <apex:column headerValue="Sent ? ">
+  <apex:inputCheckbox value="{!con.isSent}"/>
+  </apex:column>
+  <apex:column >
+  <apex:actionStatus id="actionStatus">
+                    <apex:facet name="start">
+                      <img src="/img/loading.gif" />
+                    </apex:facet>
+                    <apex:facet name="stop">
+                      <apex:commandButton disabled="{!con.contactIns.sent__c}" value="Send" action="{!Send}" status="actionStatus" reRender="formID,actionStatus">
+<apex:param name="caseIDval" value="{!con.contactIns.ID}" assignTo="{!caseID}"/>
+  </apex:commandbutton>
+                    </apex:facet>
+                </apex:actionStatus>
+     
+    </apex:column>
+  </apex:pageBlockTable>
+  </APEx:PAGEBlock>
+  </apex:form>
+</apex:page>
