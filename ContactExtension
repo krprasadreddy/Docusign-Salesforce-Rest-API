@@ -36,8 +36,8 @@ public with sharing class ContactExtension {
             
             Contact contactIns = contactMap.get(caseID);
             
-            string endpoint = 'https://demo.docusign.net/restapi/v2/accounts/acc/envelopes';
-            String authorizationHeader = '<DocuSignCredentials><Username>UN</Username><Password>PW</Password><IntegratorKey>IK</IntegratorKey></DocuSignCredentials>';
+            string endpoint = 'https://demo.docusign.net/restapi/v2/accounts/05f7d2d7-d555-4e36-99ce-a799ef1de8c9/envelopes';
+            String authorizationHeader = '<DocuSignCredentials><Username>parthiban019@gmail.com</Username><Password>parthiban18</Password><IntegratorKey>MSTS-a4ee3e59-b522-43bf-a88f-887767010a7f</IntegratorKey></DocuSignCredentials>';
             String boundary = 'AAA';
             
             Pagereference PDFval = Page.Contacts_VF;
@@ -60,17 +60,32 @@ public with sharing class ContactExtension {
                 '      "email": "'+contactIns.Email+'",'+
                 '      "name": "'+contactIns.Name+'",'+
                 '      "recipientId":"1",'+
-                //  '      "clientUserId":"1",'+ // Removed client id for sending the email
                 '      "tabs": {'+
                 '                "signHereTabs": [{'+
-                '                    "xPosition": "100",'+
-                '                    "yPosition": "100",'+
-                '                    "documentId": "1",'+
-                '                    "pageNumber": "1",'+
+                '                   "anchorString": "Signer 1:",'+
+                '                   "anchorXOffset": "1",'+
+                '                   "anchorYOffset": "0",'+
+                '                   "anchorIgnoreIfNotPresent": "false",'+
+                '                   "anchorUnits": "inches"'+
                 '                }]'+
                 '            }'+
-                '    }]'+
-                '  }'+
+                '    },'+
+                '{'+
+                '      "email": "parthibanv@mstsolutions.com",'+
+                '      "name": "Test Name",'+
+                '      "recipientId":"2",'+
+                '      "tabs": {'+
+                '                "signHereTabs": [{'+
+                '                   "anchorString": "Signer 2:",'+
+                '                   "anchorXOffset": "1",'+
+                '                   "anchorYOffset": "0",'+
+                '                   "anchorIgnoreIfNotPresent": "false",'+
+                '                   "anchorUnits": "inches"'+
+                '                }]'+
+                '            }'+
+                '    }'+
+                ' ]'+
+                '}'+
                 '}';
             
             String header = '--'+boundary+'\nContent-Type: application/json\nContent-Disposition: form-data';
