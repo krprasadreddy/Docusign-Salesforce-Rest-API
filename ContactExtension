@@ -60,6 +60,7 @@ public with sharing class ContactExtension {
                 '      "email": "'+contactIns.Email+'",'+
                 '      "name": "'+contactIns.Name+'",'+
                 '      "recipientId":"1",'+
+                '      "routingOrder":"1",'+
                 '      "tabs": {'+
                 '                "signHereTabs": [{'+
                 '                   "anchorString": "Signer 1:",'+
@@ -74,6 +75,7 @@ public with sharing class ContactExtension {
                 '      "email": "parthibanv@mstsolutions.com",'+
                 '      "name": "Test Name",'+
                 '      "recipientId":"2",'+
+                '      "routingOrder":"2",'+
                 '      "tabs": {'+
                 '                "signHereTabs": [{'+
                 '                   "anchorString": "Signer 2:",'+
