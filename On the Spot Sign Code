@@ -1,0 +1,134 @@
+ public pagereference SignNow(){
+   
+   String envelopeId;
+   
+   
+         if(caseID <> NULL && contactMap.containsKey(caseID)){
+            
+            Contact contactIns = contactMap.get(caseID);
+            
+      String endpoint = 'https://demo.docusign.net/restapi/v2/accounts/---Account ID--------------/envelopes';
+   String authorizationHeader = '<DocuSignCredentials><Username>----username----</Username><Password>---Passord-----</Password><IntegratorKey>----Integrator Key---</IntegratorKey></DocuSignCredentials>';
+    String boundary = 'AAA';
+            
+            Pagereference PDFval = Page.Contacts_VF;
+            String documentPDF = EncodingUtil.base64Encode(PDFval.getContentAsPDF());
+            
+            String body =  '{'+
+                '  "status":"sent",'+
+                '  "enableWetSign": "false",'+
+                '  "emailBlurb":"Please Sign this Document blurb '+contactIns.Name+'",'+
+                '  "emailSubject": "Please Sign this Document subject '+contactIns.Name+'",'+
+                '  "enforceSignerVisibility":"false",'+
+                '  "documents": [{'+
+                '      "name": "document.pdf",'+
+                '      "documentId":"1",'+
+                '      "order":"1",'+
+                '      "documentBase64":"'+documentPDF+'"'+
+                '  }],'+
+                '"recipients": {'+
+                '    "signers" : [{'+
+                '      "email": "'+contactIns.Email+'",'+
+                '      "name": "'+contactIns.Name+'",'+
+                '      "recipientId":"1",'+
+                '      "routingOrder":"1",'+
+                '      "clientUserId":"1",'+
+                '      "tabs": {'+
+                '                "signHereTabs": [{'+
+                '                   "anchorString": "Signer 1:",'+
+                '                   "anchorXOffset": "1",'+
+                '                   "anchorYOffset": "0",'+
+                '                   "anchorIgnoreIfNotPresent": "false",'+
+                '                   "anchorUnits": "inches"'+
+                '                }]'+
+                '            }'+
+                '    },'+
+                '{'+
+                '      "email": "parthibanv@mstsolutions.com",'+
+                '      "name": "Test Name",'+
+                '      "recipientId":"2",'+
+                '      "routingOrder":"2",'+
+                '      "clientUserId":"1",'+
+                '      "tabs": {'+
+                '                "signHereTabs": [{'+
+                '                   "anchorString": "Signer 2:",'+
+                '                   "anchorXOffset": "1",'+
+                '                   "anchorYOffset": "0",'+
+                '                   "anchorIgnoreIfNotPresent": "false",'+
+                '                   "anchorUnits": "inches"'+
+                '                }]'+
+                '            }'+
+                '    }'+
+                ' ]'+
+                '}'+
+                '}';
+            
+            String header = '--'+boundary+'\nContent-Type: application/json\nContent-Disposition: form-data';
+            String jsonBody = header +'\n\n'+body+'\n\n--'+boundary+'--';
+            system.debug(jsonBody);
+            //Callout to Docusign.
+            HttpRequest req = new HttpRequest();
+            req.setHeader('X-DocuSign-Authentication', authorizationHeader);
+            req.setHeader('Accept','application/json');
+            req.setHeader('Host','demo.docusign.net');
+            req.setHeader('Content-Length','162100');
+            req.setHeader('Content-Type','multipart/form-data; boundary='+boundary);
+            req.setEndpoint(endpoint);
+            req.setMethod('POST'); 
+            req.setBody(jsonBody);
+            Http http = new Http();
+            HTTPResponse res;
+            
+            res = http.send(req);
+            system.debug(res.getBody());
+           Map<String, Object> results = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+                        if((String) results.get('envelopeId') != '')
+                        envelopeId = (String) results.get('envelopeId');
+                        
+   
+   
+//---------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------
+    
+    endpoint = 'https://demo.docusign.net/restapi/v2/accounts/---Account ID--------------/envelopes';
+    authorizationHeader = '<DocuSignCredentials><Username>----username----</Username><Password>---Passord-----</Password><IntegratorKey>----Integrator Key---</IntegratorKey></DocuSignCredentials>';
+ 
+            //'https://demo.docusign.net/restapi/v2/accounts/---Account ID--------------/envelopes'
+            string endpoint2 = 'https://demo.docusign.net/restapi/v2/accounts/------Account ID------/envelopes/'+envelopeId+'/views/recipient';
+            HttpRequest request = new HttpRequest();
+            request.setHeader('X-DocuSign-Authentication', authorizationHeader);
+            request.setHeader('Accept','application/json');
+            request.setHeader('Host','demo.docusign.net');
+            request.setHeader('Content-Length','162100');
+            request.setHeader('Content-Type','application/json');
+            request.setMethod('POST'); 
+            Http httprequest = new Http();
+            HTTPResponse response;
+            request.setEndpoint(endpoint2);
+            string jsonPayload;
+            system.debug('URL.getSalesforceBaseUrl().toExternalForm()'+URL.getSalesforceBaseUrl().toExternalForm());
+            String baseUrl = URL.getSalesforceBaseUrl().toExternalForm();
+            //system.debug('@@@@@@@@@@@@@@@ signersKeyPairMap @@@@@@@@@@@@'+signersKeyPairMap); 
+           // system.debug('@@@@@@@@@@@@@@@ signersKeyPairMap @@@@@@@@@@@@'+SingerName); 
+            jsonPayload = '{'+
+                '    "userName": "'+contactIns.Name+'",'+
+                '    "email": "parthibanv@mstsolutions.com",'+
+                '    "recipientId": "1",'+
+                '    "clientUserId": "1",'+
+                '    "authenticationMethod": "None",'+
+                '   "returnUrl": "'+baseUrl +'/apex/Contacts_VF"'+
+                '}'; 
+                
+            system.debug('@@@@@@@@@@@@@@@ jsonPayload @@@@@@@@@@@@'+jsonPayload ); 
+            request.setBody(jsonPayload);
+            response = httprequest.send(request);  
+            system.debug('@@@@@@@@@@@@@@@ response @@@@@@@@@@@@'+response);
+            Map<String, Object> results1 = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+            PageReference reference=new PageReference((String) results1.get('url'));
+                reference.setRedirect(true);
+                return reference;
+     } 
+     return NULL;
+     
+     }
