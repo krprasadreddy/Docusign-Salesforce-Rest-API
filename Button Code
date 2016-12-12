@@ -1,0 +1,6 @@
+"{!REQUIRESCRIPT(URLFOR($Site.Prefix+'/apex/dsfs__DocuSign_JavaScript'))}" 
+
+var sourceId = DSGetPageIDFromHref(); 
+var RQD=DSGetPageIDFromHref(); 
+
+window.location.href = "{!URLFOR($Site.Prefix+'/apex/dsfs__DocuSign_CreateEnvelope?SourceID='+Quote.Id+'&RQD='+Quote.Id+'&DSEID=0&DST=<Docusing Template ID>')}";
