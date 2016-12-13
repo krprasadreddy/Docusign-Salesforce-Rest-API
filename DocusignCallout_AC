@@ -36,17 +36,6 @@ String body =  '{'+
                 '  "emailBlurb":"Please Sign this Document blurb", '+
                 '  "emailSubject": "Please Sign this Document subject",'+
                 '  "enforceSignerVisibility":"True",'+
-                '    "textTabs": [{'+
-                '      "anchorString": "Notes:-",'+
-                '      "anchorXOffset": "1",'+
-                '      "anchorYOffset": "0",'+
-                '      "tabLabel": "Notes",'+
-                '      "name": "Notes",'+
-                '      "required": "true",'+
-                '      "locked": "false",'+
-                '      "value": "123123",'+
-                '      "width": "42"'+
-                '    }],'+ 
                 '  "documents": [{'+
                 '      "name": "Quote.pdf",'+
                 '      "documentId":"1",'+
@@ -67,9 +56,30 @@ String body =  '{'+
                 '                   "anchorYOffset": "0",'+
                 '                   "anchorIgnoreIfNotPresent": "false",'+
                 '                   "anchorUnits": "inches"'+
-                '                }]'+
+                '                }],'+
+                '   "textTabs": [{'+
+                '          "anchorString": "Notes:-",'+
+                '          "anchorXOffset": "10",'+
+                '          "anchorYOffset": "0",'+
+                '          "pageNumber": "1",'+
+                '          "locked": "false",'+
+                '          "name": "Notes Val",'+
+                '          "required": "false",'+
+                '          "value": "",'+
+                '          "width": "42",'+
+                '          "height": "11",'+
+                '          "bold": "false",'+
+                '          "font": "arial",'+
+                '          "fontColor": "black",'+
+                '          "fontSize": "10",'+
+                '          "italic": "false",'+
+                '          "tabLabel": "Notes Val",'+
+                '          "underline": "false",'+
+                '          "concealValueOnDocument": "false",'+
+                '          "disableAutoSize": "false"'+
+                '       }]'+
                 '            }'+
-                '    },'+
+                '    }'+
                 ' ]'+
                 '}'+
                 '}';
