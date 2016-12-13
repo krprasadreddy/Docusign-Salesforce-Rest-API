@@ -1,0 +1,114 @@
+global class DocusignCallout_AC{
+    webservice static String callApproval(Id quoteID) { 
+     if(quoteID == NULL || String.isBlank(quoteID))
+     return 'Invalid ID';
+     
+     List<Quote> quoteList = [SELECT Contact.Name,Contact.Email FROM Quote WHERE ID =:quoteID];
+     if(quoteList.isEmpty()) 
+     return 'Quote not Exist for this ID'+quoteID;
+     
+     Quote quoteIns = quoteList.get(0);
+     
+     if(quoteIns.contactid == NULL)
+     return 'Contact is not associated With this Quote';
+     
+     if(quoteIns.Contact.Email == NULL)
+     return 'Email is not available in the associated Contact';
+     
+    
+                string endpoint = 'https://demo.docusign.net/restapi/v2/accounts/da40d4ce-9195-428d-9693-7744b7eaacb2/envelopes';
+            String authorizationHeader = '<DocuSignCredentials><Username>krishnadoss@gmail.com</Username><Password>metasoft22</Password><IntegratorKey>KRIS-5d962132-af05-4ad2-9f19-128e9ba9ba9b</IntegratorKey></DocuSignCredentials>';
+            String boundary = 'AAA';
+            
+          //  Pagereference PDFval = new pagereference('/apex/DocusignQuotePage_VF?id='+quoteID);
+           // String documentPDF = EncodingUtil.base64Encode(PDFval.getContentAsPDF());
+           
+           Pagereference PDF = page.DocusignQuotePage_VF;
+           pdf.getParameters().put('Id',quoteID);
+           String documentPDF = EncodingUtil.base64Encode(PDF.getContent());
+           
+//Pagereference PDF = new pagereference('/apex/DocusignQuotePage_VF?id='+quoteID);
+//String documentPDF = EncodingUtil.base64Encode(PDF.getContentAsPDF());
+
+String body =  '{'+
+                '  "status":"sent",'+
+                '  "enableWetSign": "false",'+
+                '  "emailBlurb":"Please Sign this Document blurb", '+
+                '  "emailSubject": "Please Sign this Document subject",'+
+                '  "enforceSignerVisibility":"True",'+
+                '    "textTabs": [{'+
+                '      "anchorString": "Notes:-",'+
+                '      "anchorXOffset": "1",'+
+                '      "anchorYOffset": "0",'+
+                '      "tabLabel": "Notes",'+
+                '      "name": "Notes",'+
+                '      "required": "true",'+
+                '      "locked": "false",'+
+                '      "value": "123123",'+
+                '      "width": "42"'+
+                '    }],'+ 
+                '  "documents": [{'+
+                '      "name": "Quote.pdf",'+
+                '      "documentId":"1",'+
+                '      "order":"1",'+
+                '      "documentBase64":"'+documentPDF+'"'+
+                '  }],'+
+                '"recipients": {'+
+                '    "signers" : [{'+
+            //    '      "email": "parthibanv@mstsolutions.com",'+
+                '      "email": "'+quoteIns.Contact.Email+'",'+
+                '      "name": "'+quoteIns.Contact.Name+'",'+
+                '      "recipientId":"1",'+
+             //   '      "routingOrder":"2",'+
+                '      "tabs": {'+
+                '                "signHereTabs": [{'+
+                '                   "anchorString": "Signature :",'+
+                '                   "anchorXOffset": "1",'+
+                '                   "anchorYOffset": "0",'+
+                '                   "anchorIgnoreIfNotPresent": "false",'+
+                '                   "anchorUnits": "inches"'+
+                '                }]'+
+                '            }'+
+                '    },'+
+                ' ]'+
+                '}'+
+                '}';
+            
+            String header = '--'+boundary+'\nContent-Type: application/json\nContent-Disposition: form-data';
+            String jsonBody = header +'\n\n'+body+'\n\n--'+boundary+'--';
+            system.debug(jsonBody);
+            //Callout to Docusign.
+            HttpRequest req = new HttpRequest();
+            req.setHeader('X-DocuSign-Authentication', authorizationHeader);
+            req.setHeader('Accept','application/json');
+            req.setHeader('Host','demo.docusign.net');
+            req.setHeader('Content-Length','162100');
+            req.setHeader('Content-Type','multipart/form-data; boundary='+boundary);
+            req.setEndpoint(endpoint);
+            req.setMethod('POST'); 
+            req.setBody(jsonBody);
+            Http http = new Http();
+            HTTPResponse res;
+            try{
+            res = http.send(req);
+            system.debug(res.getBody());
+            Map<String, Object> reponseMap =(Map<String, Object>)JSON.deserializeUntyped(res.getbody());
+                        if(res.getstatusCode() == 201 && res.getStatus() <> NULL &&  res.getStatus() == 'Created'){
+                            dsfs__DocuSign_Status__c dsfs= NEW dsfs__DocuSign_Status__c();
+                            dsfs.dsfs__DocuSign_Envelope_ID__c = (String)reponseMap.get('envelopeId');
+                            dsfs.Quote__c= quoteID;
+                            Insert dsfs; 
+                       return 'Quote has been Successfully sent for the e-Signature';
+              
+            } else{
+                    return res.getStatus();
+            }
+            } catch(Exception e){
+              return e.getMessage();
+            
+            }
+        
+    }
+               
+    
+}
