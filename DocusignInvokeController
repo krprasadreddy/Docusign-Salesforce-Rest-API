@@ -1,0 +1,155 @@
+public class DocusignInvokeController {
+    
+    public pagereference ReturnToQuote(){
+        
+        pagereference pageRef = new pagereference('/'+quoteID);
+        return pageref;
+    }
+    public String quoteID{get;set;}
+    public void send(){
+        quoteID = Apexpages.currentpage().getparameters().get('id');
+        if(quoteID == NULL || String.isBlank(quoteID)){
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'Invalid ID'));
+            return;
+        }
+        List<Quote> quoteList = [SELECT Contact.Name,Contact.Email FROM Quote WHERE ID =:quoteID];
+        if(quoteList.isEmpty()){ 
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'Quote not Exist for this ID'+quoteID));
+            return;
+        }
+        Quote quoteIns = quoteList.get(0);
+        if(quoteIns.contactid == NULL){
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'Contact is not associated With this Quote'));
+            return;
+        }
+        
+        if(quoteIns.Contact.Email == NULL){
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'Email is not available in the associated Contact'));
+            return;
+        }
+        
+        Map<String,Docusign_Credentials__c> docusignCredentialsMap = Docusign_Credentials__c.getall();
+        
+        if(docusignCredentialsMap.isEmpty()){
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'Invalid Docusign Credentials Custom Settings value'));
+            return;
+        }
+        
+        if(docusignCredentialsMap.containsKey('Docusign') 
+           && docusignCredentialsMap.get('Docusign').Account_ID__c <> NULL
+           && docusignCredentialsMap.get('Docusign').Endpoint__c <> NULL
+           && docusignCredentialsMap.get('Docusign').Integrator_Key__c <> NULL
+           && docusignCredentialsMap.get('Docusign').Password__c <> NULL
+           && docusignCredentialsMap.get('Docusign').User_Name__c <> NULL
+          && docusignCredentialsMap.get('Docusign').Endpoint__c <> NULL){
+               
+               Docusign_Credentials__c docusignCredIns = docusignCredentialsMap.get('Docusign');
+               
+               string endpoint = docusignCredIns.Endpoint__c+'/restapi/v2/accounts/'+docusignCredIns.Account_ID__c+'/envelopes';
+               String authorizationHeader = '<DocuSignCredentials><Username>'+docusignCredIns.User_Name__c+'</Username><Password>'+docusignCredIns.Password__c+'</Password><IntegratorKey>'+docusignCredIns.Integrator_Key__c+'</IntegratorKey></DocuSignCredentials>';
+               String boundary = 'AAA';
+               
+               //  Pagereference PDFval = new pagereference('/apex/DocusignQuotePage_VF?id='+quoteID);
+               // String documentPDF = EncodingUtil.base64Encode(PDFval.getContentAsPDF());
+               
+               // Pagereference PDF = page.DocusignQuotePage_VF;
+               //pdf.getParameters().put('Id',quoteID);
+               //String documentPDF = EncodingUtil.base64Encode(PDF.getContent());
+               
+               Pagereference PDF = new pagereference('/apex/DocusignQuotePage_VF?id='+quoteID);
+               system.debug(PDF);
+               
+               String documentPDF = EncodingUtil.base64Encode(PDF.getContent());
+               
+               String body =  '{'+
+                   '  "status":"sent",'+
+                   '  "enableWetSign": "false",'+
+                   '  "emailBlurb":"Please Sign this Quote", '+
+                   '  "emailSubject": "Please Sign this Quote",'+
+                   '  "enforceSignerVisibility":"True",'+
+                   '  "documents": [{'+
+                   '      "name": "Quote.pdf",'+
+                   '      "documentId":"1",'+
+                   '      "order":"1",'+
+                   '      "documentBase64":"'+documentPDF+'"'+
+                   '  }],'+
+                   '"recipients": {'+
+                   '    "signers" : [{'+
+                   '      "email": "'+quoteIns.Contact.Email+'",'+
+                   '      "name": "'+quoteIns.Contact.Name+'",'+
+                   '      "recipientId":"1",'+
+                   '      "tabs": {'+
+                   '                "signHereTabs": [{'+
+                   '                   "anchorString": "Signature :",'+
+                   '                   "anchorXOffset": "1",'+
+                   '                   "anchorYOffset": "0",'+
+                   '                   "anchorIgnoreIfNotPresent": "false",'+
+                   '                   "anchorUnits": "inches"'+
+                   '                }],'+
+                   '   "textTabs": [{'+
+                   '          "anchorString": "Notes:-",'+
+                   '          "anchorXOffset": "80",'+
+                   '          "anchorYOffset": "0",'+
+                   '          "pageNumber": "1",'+
+                   '          "locked": "false",'+
+                   '          "name": "Notes  (Max 300 Char)",'+
+                   '          "required": "false",'+
+                   '          "value": "",'+
+                   '          "width": "510",'+
+                   '          "height": "90",'+
+                   '          "maxLength" : "300",'+
+                   '          "bold": "false",'+
+                   '          "font": "arial",'+
+                   '          "fontColor": "black",'+
+                   '          "fontSize": "5",'+
+                   '          "italic": "false",'+
+                   '          "tabLabel": "Notes",'+
+                   '          "underline": "false",'+
+                   '          "concealValueOnDocument": "false",'+
+                   '          "disableAutoSize": "false"'+
+                   '       }]'+
+                   '            }'+
+                   '    }'+
+                   ' ]'+
+                   '}'+
+                   '}';
+               
+               String header = '--'+boundary+'\nContent-Type: application/json\nContent-Disposition: form-data';
+               String jsonBody = header +'\n\n'+body+'\n\n--'+boundary+'--';
+               system.debug(jsonBody);
+               //Callout to Docusign.
+               HttpRequest req = new HttpRequest();
+               req.setHeader('X-DocuSign-Authentication', authorizationHeader);
+               req.setHeader('Accept','application/json');
+               req.setHeader('Host','demo.docusign.net');
+               req.setHeader('Content-Length','162100');
+               req.setHeader('Content-Type','multipart/form-data; boundary='+boundary);
+               req.setEndpoint(endpoint);
+               req.setMethod('POST'); 
+               req.setBody(jsonBody);
+               Http http = new Http();
+               HTTPResponse res;
+               try{
+                   res = http.send(req);
+                   system.debug(res.getBody());
+                   Map<String, Object> reponseMap =(Map<String, Object>)JSON.deserializeUntyped(res.getbody());
+                   if(res.getstatusCode() == 201 && res.getStatus() <> NULL &&  res.getStatus() == 'Created'){
+                       dsfs__DocuSign_Status__c dsfs= NEW dsfs__DocuSign_Status__c();
+                       dsfs.dsfs__DocuSign_Envelope_ID__c = (String)reponseMap.get('envelopeId');
+                       dsfs.Quote__c= quoteID;
+                       Insert dsfs; 
+                       ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.INFO,'Quote has been Successfully sent for the e-Signature'));
+                   } else{
+                       ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.INFO,res.getStatus()));
+                       
+                   }
+               } catch(Exception e){
+                   ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,e.getMessage()));
+              }
+           } else{
+               
+               ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'Invalid Docusign Credentials Custom Settings value'));
+               return;
+           }
+    }
+}
