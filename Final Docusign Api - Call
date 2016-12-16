@@ -1,0 +1,249 @@
+<!-- Notes and Attachments Vf page -->
+<apex:page standardController="Opportunity" title="Notes_Attachments_VF" showHeader="false" extensions="AttachmentsController_AC" sidebar="false">
+    
+    <head>
+        <script type="text/javascript" src="/soap/ajax/26.0/connection.js"> </script>
+        <apex:includeScript value="{!$Resource.FileSaver}"/>
+            <apex:includeScript value="{!$Resource.JQ_JSzip}"/>
+                
+                <apex:includeScript value="{!URLFOR($Resource.jQuery, '/jquery-1.8.2.min.js')}"/> 
+                    
+                    <!--    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js">
+                        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        -->
+        
+        <apex:includeScript value="{!URLFOR($Resource.js_zip, '/jszip.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.js_zip, '/jszip-load.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.js_zip, '/jszip-deflate.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.js_zip, '/jszip-inflate.js')}"/>
+        
+        <script type="text/javascript">
+        var j$ = jQuery.noConflict();
+        
+        j$(document).ready(function() {
+            //Hide upload button
+            var uploadZipButton = j$('input[id$=uploadZipButton]');
+            uploadZipButton.css('display', 'none');
+            
+            //Instantiate JSZip
+            var zipFile = new JSZip();
+            var x=0;
+            $(".loader").hide();
+            
+            //Intercept click event
+            j$('a[id=generateZipLink]').click(function() {
+                
+                var ids = [];
+                j$("input[name='att_ids_group[]']:checked").each(function(){
+                    ids.push(j$(this).val());
+                })
+                if(ids.length < 1){
+                    // alert('Please select alteast one Attachment');
+                    
+                    if(x == 0){
+                        var alertText = 'Please select at least one attachment before downloading.'; // add your message here.
+                        var alertmsg = '<div class="customAlertMsg"><div class="message errorM3" id="ilsBanner" style=""><table border="0" cellpadding="0" cellspacing="0" class="messageTable"><tbody> <tr> <td> <img alt="Information" class="msgIcon" src="/s.gif" title="Information"> </td><td class="messageCell"><div class="messageText"><spanstyle="color:#cc0000"><h4>Error:</h4></span>'+ alertText +'</div></td></tr></tbody></table></div></div>';
+                        $('.outpanstyle').prepend(alertmsg);
+                        $(".outpanstyle").show();
+                        x = 1;
+                    }
+                    
+                    return true;
+                }else{
+                    $(".outpanstyle").hide();
+                    $(".loader").show();
+                    $(".sty").hide();
+                    
+                }
+                j$("input[name='att_ids_group[]']:checked").each(function(){
+             
+             var alval = $(this).val();
+              alert(alval);
+                sforce.connection.sessionId = '{!$Api.Session_ID}';                              
+                var fileData = sforce.connection.query("select name,body from attachment WHERE ID = '"+alval+"'");
+                var records = fileData.getArray("records");
+                
+                var record = records[0];
+                console.log(record.Name + " -- " + record.Body);
+                console.log(records);  
+                alert(records);  
+                compressFile(zipFile, record.Name, record.Body);
+             
+                });
+                
+                sendZip(zipFile);
+
+            });//end click
+            
+            //Compress one single file
+            function compressFile(zipFile, name, data) {
+                zipFile.file(name, data, {base64:true});
+            }
+            
+            //Generate and upload zip file
+            function sendZip(zipFile) {
+                alert(zipFile);
+                var data = zipFile.generate({type:"blob"});
+                saveAs(data , "{!currDateTime}.zip"); 
+                setTimeout(function(){ window.top.location='/{!parentid}' }, 1000);
+            }
+        });
+        //-------------------------------------------------------------------------       
+        </script>
+        <script>
+        $(document).ready(function(){
+            $(".loader").hide();
+            $("#chkbox").change(function(){
+                $(".chkval").prop('checked', $(this).prop("checked"));
+            });
+            
+            $('.chkval').change(function(){ 
+                //uncheck "select all", if one of the listed checkbox item is unchecked
+                if(false == $(this).prop("checked")){ //if this item is unchecked
+                    $("#chkbox").prop('checked', false); //change "select all" checked status to false
+                }
+                //check "select all" if all checkbox items are checked
+                if ($('.chkval:checked').length == $('.chkval').length ){
+                    $("#chkbox").prop('checked', true);
+                }
+            });
+            
+        });
+        </script>
+        <style>
+            .linkcss{
+            color: #015ba7 !important;
+            text-decoration: none;
+            font-weight: normal;
+            }
+            .headerRow1{
+            width:12% !important;
+            }
+            .NameCol{
+            width:30% !important;
+            }
+            .TypeCol{
+            width:9% !important;
+            }
+            
+            .loader {
+            border: 16px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 16px solid blue;
+            border-bottom: 16px solid blue;
+            width: 30px;
+            height: 30px;
+            -webkit-animation: spin 2s linear infinite;
+            animation: spin 2s linear infinite;
+            }
+            
+            @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+            }
+            
+            @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+            }
+        </style>    
+    </head>
+    <apex:form id="uploadZipForm" enctype="multipart/form-data">
+        <!--    <span>Status: </span> -->
+        <span id="zipStatus"></span>
+        <br/>      
+        
+        <apex:pageBlock id="thePageBlock"   >
+            <center>   <div class="loader"></div> </center>
+            <apex:outputPanel styleClass="sty">
+                <br/> <center> 
+                <apex:outputLink styleClass="btn"  style="text-decoration:none;padding:4px;" value="{!newNotesUrl}&retURL={!parentId}" id="newnotesLink" target="_parent">New Note</apex:outputLink>
+                &nbsp;
+                <apex:outputLink styleClass="btn"  style="text-decoration:none;padding:4px;" value="{!newAttachmentUrl}&parentname={!opportunityName}&retURL={!parentId}" id="newnattachLink" target="_parent">Attach File</apex:outputLink>
+                &nbsp;
+                <apex:outputLink styleClass="btn" rendered="{!!isnull(attachments)}"  style="text-decoration:none;padding:4px;" value="{!viewAllUrl}&retURL={!parentId}" id="viewalllink" target="_parent">View All</apex:outputLink>
+                </center> <br/>
+                <apex:outputPanel styleClass="outpanstyle" ></apeX:outputPanel>
+                
+                
+                
+                <apex:pageBlockTable value="{!attachments}" var="att" >
+                    <apex:column headerValue="Select All" >
+                        <apex:facet name="header">
+                            Select All<br/>
+                            <input type="checkbox" class="selectallChkbox" id="chkbox"/>
+                            
+                        </apex:facet>
+                        <apex:outputPanel rendered="{!!att.isNotes}">
+                            <input type="checkbox" class="chkval" name="att_ids_group[]" value="{!att.attachmentIns.Id}" />
+                        </apex:outputPanel>
+                        <!--  <apex:outputPanel rendered="{!att.isNotes}">
+&nbsp;&nbsp;X <!-- <apex:inputCheckbox disabled="true" /> 
+</apex:outputPanel> -->
+                    </apex:column>
+                    <apex:column styleClass="headerRow1" headerValue="Action">
+                        <apex:outputPanel rendered="{!att.isNotes}">
+                            <apex:outputLink styleClass="linkcss" value="/{!att.notesIns.ID}/e?retURL={!parentId}" id="noteseditLink" target="_parent">Edit</apex:outputLink>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!!att.isNotes}">
+                            <apex:outputLink styleClass="linkcss" value="/{!att.attachmentIns.ID}/e?retURL={!parentId}" id="attachmenteditLink" target="_parent">Edit</apex:outputLink>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!!att.isNotes}">
+                            &nbsp;|&nbsp;
+                            <apex:outputLink styleClass="linkcss" value="{!URLFOR($Action.Attachment.Download,att.attachmentIns.id)}" target="_blank">View
+                            </apex:outputLink>
+                        </apex:outputPanel> &nbsp;|&nbsp;
+                        <apex:outputPanel rendered="{!!att.isNotes}">
+                            <apex:commandLink styleClass="linkcss" onclick="if(!confirm('Are you sure?')){return false};"  action="{!deleteAttachment}"  oncomplete="window.top.location='/{!parentid}'; return false" value="Del">
+                                <apex:param value="{!att.attachmentIns.id}" name="idToDel" assignTo="{!attachmentIDToDelete}"/>
+                            </apex:commandLink>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!att.isNotes}">
+                            <apex:commandLink styleClass="linkcss" onclick="if(!confirm('Are you sure?')){return false};" action="{!deleteAttachment}"  oncomplete="window.top.location='/{!parentid}'; return false" value="Del">
+                                <apex:param value="{!att.notesIns.id}" name="idToDel" assignTo="{!attachmentIDToDelete}"/>
+                            </apex:commandLink>
+                        </apex:outputPanel> 
+                    </apex:column>
+                    <apex:column styleClass="TypeCol" headerValue="Type">
+                        <apex:outputPanel rendered="{!!att.isNotes}">
+                            Attachment
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!att.isNotes}">
+                            Note
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column styleClass="NameCol" headerValue="Title">
+                        <apex:outputPanel rendered="{!!att.isNotes}">
+                            <apex:outputLink value="/{!att.attachmentIns.ID}" id="NotesLink" target="_parent">{!att.attachmentIns.Name}</apex:outputLink>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!att.isNotes}">
+                            <apex:outputLink value="/{!att.notesIns.ID}" id="attachmentsLink" target="_parent">{!att.notesIns.title}</apex:outputLink>
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column headerValue="Last Modified By">
+                        <apex:outputPanel rendered="{!!att.isNotes}">
+                            {!att.attachmentIns.LastModifiedby.Name}, {!att.formattedLastModifiedDate}
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!att.isNotes}">
+                            {!att.notesIns.LastModifiedby.Name}, {!att.formattedLastModifiedDate}
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column headerValue="Created By">
+                        <apex:outputPanel rendered="{!!att.isNotes}">
+                            {!att.attachmentIns.createdby.Name}, {!att.formattedCreatedDate}
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!att.isNotes}">
+                            {!att.notesIns.createdby.Name}, {!att.formattedCreatedDate}
+                        </apex:outputPanel>
+                    </apex:column>
+                </apex:pageBlockTable>
+                <p>
+                    <apex:outputText rendered="{!hasAttachments}" >
+                        <center>   <a id="generateZipLink"  Class="btn" style="text-decoration:none;padding:4px;" href="#">Download Attachments</a> </center>
+                    </apex:outputText>
+                </p>
+            </apex:outputPanel>
+        </apex:pageBlock>
+        
+    </apex:form>
+</apex:page>
