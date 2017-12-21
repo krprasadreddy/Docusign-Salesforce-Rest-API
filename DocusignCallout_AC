@@ -17,7 +17,7 @@ global class DocusignCallout_AC{
      
     
                 string endpoint = 'https://demo.docusign.net/restapi/v2/accounts/da40d4ce-9195-428d-9693-7744b7eaacb2/envelopes';
-            String authorizationHeader = '<DocuSignCredentials><Username>krishnadoss@gmail.com</Username><Password>metasoft22</Password><IntegratorKey>KRIS-5d962132-af05-4ad2-9f19-128e9ba9ba9b</IntegratorKey></DocuSignCredentials>';
+            String authorizationHeader = '<DocuSignCredentials><Username>xxxxxx</Username><Password>xxxx</Password><IntegratorKey>xxxxxx</IntegratorKey></DocuSignCredentials>';
             String boundary = 'AAA';
             
           //  Pagereference PDFval = new pagereference('/apex/DocusignQuotePage_VF?id='+quoteID);
